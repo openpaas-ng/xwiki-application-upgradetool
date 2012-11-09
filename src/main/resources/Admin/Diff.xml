@@ -1,0 +1,290 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xwikidoc>
+<web>Admin</web>
+<name>Diff</name>
+<language></language>
+<defaultLanguage>fr</defaultLanguage>
+<translation>0</translation>
+<parent></parent>
+<creator>XWiki.ttest3</creator>
+<author>XWiki.Admin</author>
+<customClass></customClass>
+<contentAuthor>XWiki.Admin</contentAuthor>
+<creationDate>1349973357000</creationDate>
+<date>1352467821000</date>
+<contentUpdateDate>1352467821000</contentUpdateDate>
+<version>3.1</version>
+<title>Diff</title>
+<template></template>
+<defaultTemplate></defaultTemplate>
+<validationScript></validationScript>
+<comment></comment>
+<minorEdit>false</minorEdit>
+<syntaxId>xwiki/2.0</syntaxId>
+<hidden>false</hidden>
+<object>
+<class>
+<name>XWiki.RequiredRightClass</name>
+<customClass></customClass>
+<customMapping></customMapping>
+<defaultViewSheet></defaultViewSheet>
+<defaultEditSheet></defaultEditSheet>
+<defaultWeb></defaultWeb>
+<nameField></nameField>
+<validationScript></validationScript>
+<level>
+<cache>0</cache>
+<disabled>0</disabled>
+<displayType>select</displayType>
+<multiSelect>0</multiSelect>
+<name>level</name>
+<number>1</number>
+<picker>0</picker>
+<prettyName>level</prettyName>
+<relationalStorage>0</relationalStorage>
+<separator> </separator>
+<separators> ,|</separators>
+<size>1</size>
+<sort>none</sort>
+<unmodifiable>0</unmodifiable>
+<validationMessage></validationMessage>
+<validationRegExp></validationRegExp>
+<values>edit|programming</values>
+<classType>com.xpn.xwiki.objects.classes.StaticListClass</classType>
+</level>
+</class>
+<name>Admin.Diff</name>
+<number>0</number>
+<className>XWiki.RequiredRightClass</className>
+<guid>1e3131df-3a5c-497a-a790-92a80f36ea8f</guid>
+<property>
+<level>programming</level>
+</property>
+</object>
+<content>{{velocity}}
+
+#macro(changes $origdoc $rev1 $newdoc $rev2)
+
+{{html}}
+#set($commentsChanges = $util.arrayList)
+#set($objectsChanges = $util.arrayList)
+#foreach($objectDiff in $diffTool.getObjectDiff($origdoc, $newdoc))
+  #if($objectDiff.get(0).getClassName() == 'XWiki.XWikiComments')
+    #set($discard = $commentsChanges.add($objectDiff))
+  #elseif($objectDiff.get(0).getClassName() == 'XWiki.TagClass')
+    #if("$!objDiff.get(0).newValue" != "$!objectDiff.get(0).oldValue")
+      #set($tagsChanges = $objectDiff)
+    #end
+  #else
+    #set($discard = $objectsChanges.add($objectDiff))
+  #end
+#end
+#set($hasChanges = false)
+##
+## Metadata changes: tags, author, language...
+##
+#set($metadataChanges = $doc.getMetaDataDiff($origdoc, $newdoc))
+#if($metadataChanges.size() &gt; 0 || $tagsChanges)
+  #set($hasChanges = true)
+  &lt;div id="changes-metadata"&gt;
+    &lt;table class="changes-table"&gt;
+      &lt;tr class="changes-table-title"&gt;
+        &lt;th colspan="3"&gt;$msg.get('changes.metadatachanges')&lt;/th&gt;
+      &lt;/tr&gt;
+      #changesTableHeader()
+      #foreach($propertyChange in $doc.getMetaDataDiff($origdoc, $newdoc))
+        #displayPropertyChange($propertyChange $propertyChange.field $msg.get("core.viewers.diff.metadata.${propertyChange.field}"))
+      #end
+      #if($tagsChanges)
+        #foreach($propertyChange in $tagsChanges)
+          #displayPropertyChange($propertyChange ${propertyChange.propName} $msg.get("core.viewers.diff.tag.${propertyChange.propName}"))
+        #end
+      #end
+    &lt;/table&gt;
+  &lt;/div&gt;
+#end
+##
+## Content changes
+##
+#set($text1 = "$!origdoc.content.trim().replaceAll('\r', '')")
+#set($text2 = "$!newdoc.content.trim().replaceAll('\r', '')")
+#if($text1 != $text2)
+  #set($hasChanges = true)
+  &lt;div id="changes-content"&gt;
+    &lt;table class="changes-table" summary="$msg.get('core.viewers.diff.summary')"&gt;
+      &lt;tr class="changes-table-title"&gt;
+        &lt;th&gt;$msg.get('core.viewers.diff.contentChanges')&lt;/th&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+        &lt;td&gt;$diffTool.getDifferencesAsHTML("$!text1", "$!text2",false)&lt;/td&gt;
+      &lt;/tr&gt;
+    &lt;/table&gt;
+  &lt;/div&gt;
+#end
+##
+## Attachment changes
+##
+#set($attachmentsChanges = $doc.getAttachmentDiff($origdoc, $newdoc))
+#if($attachmentsChanges.size() &gt; 0)
+  #set($hasChanges = true)
+  &lt;div id="changes-attachments"&gt;
+    &lt;table class="changes-table" summary="$msg.get('core.viewers.diff.summary')"&gt;
+      &lt;tr class="changes-table-title"&gt;
+        &lt;th colspan="2"&gt;$msg.get('core.viewers.diff.attachmentChanges')&lt;/th&gt;
+      &lt;/tr&gt;
+      &lt;tr class="changes-table-title"&gt;
+        &lt;th&gt;$msg.get('core.viewers.diff.attachment.filename')&lt;/th&gt;
+        &lt;th&gt;$msg.get('core.viewers.diff.attachment.action')&lt;/th&gt;
+      &lt;/tr&gt;
+      #foreach($attachChange in $doc.getAttachmentDiff($origdoc, $newdoc))
+        &lt;tr&gt;
+          &lt;td&gt;$attachChange.fileName&lt;/td&gt;
+          &lt;td&gt;
+            #if(!$attachChange.origVersion)
+              &lt;a href="$newdoc.getAttachmentRevisionURL($attachChange.fileName,$attachChange.newVersion)"&gt;$msg.get('core.viewers.diff.attachment.added')&lt;/a&gt;
+            #elseif(!$attachChange.newVersion)
+              $msg.get('core.viewers.diff.attachment.deleted')
+            #else
+              $msg.get('core.viewers.diff.attachment.updated', [$attachChange.origVersion, $newdoc.getAttachmentRevisionURL($attachChange.fileName, $attachChange.origVersion), $attachChange.newVersion, $newdoc.getAttachmentRevisionURL($attachChange.fileName,$attachChange.newVersion)])
+            #end
+          &lt;/td&gt;
+        &lt;/tr&gt;
+      #end
+    &lt;/table&gt;
+  &lt;/div&gt;
+#end
+##
+## Comment changes
+##
+#if($commentsChanges.size() &gt; 0)
+  #set($hasChanges = true)
+  &lt;div id="changes-comments"&gt;
+    &lt;table class="changes-table" summary="$msg.get('core.viewers.diff.summary')"&gt;
+      &lt;tr class="changes-table-title"&gt;
+        &lt;th colspan="3"&gt;$msg.get('core.viewers.diff.commentChanges')&lt;/th&gt;
+      &lt;/tr&gt;
+      #changesTableHeader()
+      #foreach($comment in $commentsChanges)
+        #set($action = $comment.get(0).action)
+        #if($action == 'object-added')
+          &lt;tr&gt;
+            &lt;th colspan="3"&gt;$msg.get('core.viewers.diff.comment.added', [$comment.get(0).number])&lt;/th&gt;
+          &lt;/tr&gt;
+        #elseif($action == 'object-removed')
+          &lt;tr&gt;
+            &lt;th colspan="3"&gt;$msg.get('core.viewers.diff.comment.deleted', [$comment.get(0).number])&lt;/th&gt;
+          &lt;/tr&gt;
+        #else
+          &lt;tr&gt;
+            &lt;th colspan="3"&gt;$msg.get('core.viewers.diff.comment.updated', [$comment.get(0).number])&lt;/th&gt;
+          &lt;/tr&gt;
+        #end
+        #foreach($propertyChange in $comment)
+          #if($propertyChange.action != 'object-added' &amp;&amp; $propertyChange.action != 'object-removed')
+            #displayPropertyChange($propertyChange ${propertyChange.propName} $msg.get("core.viewers.diff.comment.${propertyChange.propName}"))
+          #end
+        #end
+      #end
+    &lt;/table&gt;
+  &lt;/div&gt;
+#end
+##
+## All other objects
+##
+#if($objectsChanges.size() &gt; 0)
+  #set($hasChanges = true)
+  &lt;div id="changes-objects"&gt;
+    &lt;table class="changes-table" summary="$msg.get('core.viewers.diff.summary')"&gt;
+      &lt;tr class="changes-table-title"&gt;
+        &lt;th colspan="3"&gt;$msg.get('core.viewers.diff.objectChanges')&lt;/th&gt;
+      &lt;/tr&gt;
+      #changesTableHeader()
+      #foreach($object in $objectsChanges)
+        #set($action = $object.get(0).action)
+        #if($action == 'object-added')
+          &lt;tr&gt;&lt;th colspan="3"&gt;$msg.get('core.viewers.diff.object.added', [$object.get(0).number, $object.get(0).className])&lt;/th&gt;&lt;/tr&gt;
+        #elseif($action == 'object-removed')
+          &lt;tr&gt;&lt;th colspan="3"&gt;$msg.get('core.viewers.diff.object.deleted', [$object.get(0).number, $object.get(0).className])&lt;/th&gt;&lt;/tr&gt;
+        #else
+          &lt;tr&gt;&lt;th colspan="3"&gt;$msg.get('core.viewers.diff.object.updated', [$object.get(0).number, $object.get(0).className])&lt;/th&gt;&lt;/tr&gt;
+        #end
+        #foreach($propertyChange in $object)
+          #if ($propertyChange.action != 'object-added' &amp;&amp; $propertyChange.action != 'object-removed')
+            #set ($class = $xwiki.getDocument($object.get(0).className).getxWikiClass())
+            #set ($propertyPrettyName = "$!{class.get(${propertyChange.propName}).getPrettyName()}")
+            #if ($propertyPrettyName == '')
+              #set ($propertyPrettyName = ${propertyChange.propName})
+            #end
+            #displayPropertyChange ($propertyChange ${propertyChange.propName} ${propertyPrettyName})
+          #end
+        #end
+      #end
+    &lt;/table&gt;
+  &lt;/div&gt;
+#end
+##
+## Class changes
+##
+#set($classChanges = $doc.getClassDiff($origdoc, $newdoc))
+#if(($classChanges.size() &gt; 0) &amp;&amp; ($classChanges.get(0).size() &gt; 0))
+  #set($hasChanges = true)
+  &lt;div id="changes-classes"&gt;
+    &lt;table class="changes-table" summary="$msg.get('core.viewers.diff.summary')"&gt;
+      &lt;tr class="changes-table-title"&gt;
+        &lt;th&gt;$msg.get('core.viewers.diff.classChanges')&lt;/th&gt;
+      &lt;/tr&gt;
+      #foreach($classChange in $classChanges)
+        #foreach($propertyChange in $classChange)
+          &lt;tr&gt;&lt;td&gt;$msg.get("core.viewers.diff.class.${propertyChange.action}", [$propertyChange.propName])&lt;/td&gt;&lt;/tr&gt;
+        #end
+      #end
+    &lt;/table&gt;
+  &lt;/div&gt;
+#end
+#if(!$hasChanges)
+  #info("No changes")
+#end
+{{/html}}
+
+#end
+#macro(changesTableHeader)
+  &lt;tr class="changes-table-title"&gt;
+    &lt;th&gt;$msg.get('core.viewers.diff.property')&lt;/th&gt;
+    &lt;th class="diffremoveword"&gt;$msg.get('core.viewers.diff.oldValue')&lt;/th&gt;
+    &lt;th class="diffaddword"&gt;$msg.get('core.viewers.diff.newValue')&lt;/th&gt;
+  &lt;/tr&gt;
+#end
+#macro(displayPropertyChange $diff $propertyName $propertyDisplay)
+##  &lt;tr&gt;&lt;td&gt;$diff&lt;/td&gt;&lt;/tr&gt;
+  &lt;tr&gt;
+    &lt;td&gt;$propertyDisplay&lt;/td&gt;
+    #if ("$!diff.propType" == 'TextAreaClass')
+      &lt;td colspan="2"&gt;
+        $diffTool.getDifferencesAsHTML("$!diff.prevValue", "$!diff.newValue" ,false)
+        ##$xwiki.diff.getDifferencesAsHTML("$!diff.prevValue", "$!diff.newValue" ,false)
+      &lt;/td&gt;
+    #else    
+    &lt;td class="diffremoveword"&gt;
+      #if($propertyName == 'author')
+        #set($author = "$!diff.getPrevValue()")
+        #if($author != '')
+          $xwiki.getUserName($author)
+        #end
+      #else
+        $diff.getPrevValue()
+      #end
+    &lt;/td&gt;
+    &lt;td class="diffaddword"&gt;
+      #if($propertyName == 'author')
+        #set($author = "$!diff.getNewValue()")
+        #if($author != '')
+          $xwiki.getUserName($author)
+        #end
+      #else
+        $diff.getNewValue()
+      #end
+    &lt;/td&gt;
+    #end
+  &lt;/tr&gt;
+#end
+{{/velocity}}</content></xwikidoc>

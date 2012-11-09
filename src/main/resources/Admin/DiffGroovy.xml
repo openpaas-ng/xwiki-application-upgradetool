@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xwikidoc>
+<web>Admin</web>
+<name>DiffGroovy</name>
+<language></language>
+<defaultLanguage>fr</defaultLanguage>
+<translation>0</translation>
+<parent></parent>
+<creator>XWiki.ttest3</creator>
+<author>XWiki.Admin</author>
+<customClass></customClass>
+<contentAuthor>XWiki.Admin</contentAuthor>
+<creationDate>1350062485000</creationDate>
+<date>1352467832000</date>
+<contentUpdateDate>1352467832000</contentUpdateDate>
+<version>3.1</version>
+<title>DiffGroovy</title>
+<template></template>
+<defaultTemplate></defaultTemplate>
+<validationScript></validationScript>
+<comment></comment>
+<minorEdit>false</minorEdit>
+<syntaxId>xwiki/2.0</syntaxId>
+<hidden>false</hidden>
+<object>
+<class>
+<name>XWiki.RequiredRightClass</name>
+<customClass></customClass>
+<customMapping></customMapping>
+<defaultViewSheet></defaultViewSheet>
+<defaultEditSheet></defaultEditSheet>
+<defaultWeb></defaultWeb>
+<nameField></nameField>
+<validationScript></validationScript>
+<level>
+<cache>0</cache>
+<disabled>0</disabled>
+<displayType>select</displayType>
+<multiSelect>0</multiSelect>
+<name>level</name>
+<number>1</number>
+<picker>0</picker>
+<prettyName>level</prettyName>
+<relationalStorage>0</relationalStorage>
+<separator> </separator>
+<separators> ,|</separators>
+<size>1</size>
+<sort>none</sort>
+<unmodifiable>0</unmodifiable>
+<validationMessage></validationMessage>
+<validationRegExp></validationRegExp>
+<values>edit|programming</values>
+<classType>com.xpn.xwiki.objects.classes.StaticListClass</classType>
+</level>
+</class>
+<name>Admin.DiffGroovy</name>
+<number>0</number>
+<className>XWiki.RequiredRightClass</className>
+<guid>5ebfea3d-413c-47fc-bb9a-594b761b9b3b</guid>
+<property>
+<level>programming</level>
+</property>
+</object>
+<content>/* Groovy Class #* */
+
+
+class DiffAsHTML {
+  def xwiki;
+  def context;
+  def j1;
+  def cursor;
+  def addBR;
+
+  public setContext(context, xwiki) {
+    this.xwiki = xwiki
+    this.context = context
+  }
+ 
+  public String getOriginLines(Chunk orig, Chunk rev) {
+
+    List&lt;String&gt; origlines = new ArrayList&lt;String&gt;();
+    j1 = 0;
+    if (orig.size() &gt; 0) {
+      List chunks = orig.chunk();
+      int j2 = 0;
+      for (int j = 0; j &lt; chunks.size(); j++) {
+        String origline = (String) chunks.get(j);
+        if (origline.equals("")) {
+          cursor++;
+          continue;
+        }
+        // if (j&gt;0)
+        // html.append("&lt;br/&gt;");
+        List revchunks = rev.chunk();
+        String revline = "";
+        while ("".equals(revline)) {
+          revline = (j2 &gt;= revchunks.size()) ? null : (String) revchunks.get(j2);
+          j2++;
+          j1++;
+        }
+        if (revline != null) {
+          //html.append(getWordDifferencesAsHTML(origline, revline));
+        } else {
+          //html.append("&lt;div class=\"diffmodifiedline\"&gt;");
+          //html.append("&lt;span class=\"diffremoveword\"&gt;");
+          //html.append(escape(origline));
+          //html.append("&lt;/span&gt;&lt;/div&gt;");
+          origlines.add(origline);
+        }
+        addBR = true;
+        cursor++;
+      }
+    }
+    return origlines;
+  }
+
+  public String getRevisionLines(Chunk rev) {
+    
+    List&lt;String&gt; revlines = new ArrayList&lt;String&gt;();
+    if (rev.size() &gt; 0) {
+      List chunks = rev.chunk();
+      for (int j = j1; j &lt; chunks.size(); j++) {
+        // if (j&gt;0)
+        // html.append("&lt;br/&gt;");   
+        //html.append("&lt;div class=\"diffmodifiedline\"&gt;");
+        //html.append("&lt;span class=\"diffaddword\"&gt;");
+        //html.append(escape((String) chunks.get(j)));
+        //html.append("&lt;/span&gt;&lt;/div&gt;");
+        revlines.add((String) chunks.get(j));
+      }
+      addBR = true;
+    }
+    return revlines;
+  }
+}
+
+/* *# */</content></xwikidoc>

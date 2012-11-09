@@ -1,0 +1,912 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xwikidoc>
+<web>Admin</web>
+<name>UpgradeTool</name>
+<language></language>
+<defaultLanguage>en</defaultLanguage>
+<translation>0</translation>
+<parent>Admin.Tools</parent>
+<creator>XWiki.Admin</creator>
+<author>XWiki.Admin</author>
+<customClass></customClass>
+<contentAuthor>XWiki.Admin</contentAuthor>
+<creationDate>1262300400000</creationDate>
+<date>1352467782000</date>
+<contentUpdateDate>1352467782000</contentUpdateDate>
+<version>4.1</version>
+<title>Upgrade Diff</title>
+<template></template>
+<defaultTemplate></defaultTemplate>
+<validationScript></validationScript>
+<comment></comment>
+<minorEdit>false</minorEdit>
+<syntaxId>xwiki/2.0</syntaxId>
+<hidden>false</hidden>
+<object>
+<class>
+<name>XWiki.JavaScriptExtension</name>
+<customClass></customClass>
+<customMapping></customMapping>
+<defaultViewSheet></defaultViewSheet>
+<defaultEditSheet></defaultEditSheet>
+<defaultWeb></defaultWeb>
+<nameField></nameField>
+<validationScript></validationScript>
+<cache>
+<cache>0</cache>
+<disabled>0</disabled>
+<displayType>select</displayType>
+<multiSelect>0</multiSelect>
+<name>cache</name>
+<number>5</number>
+<prettyName>Caching policy</prettyName>
+<relationalStorage>0</relationalStorage>
+<separator> </separator>
+<separators> ,|</separators>
+<size>1</size>
+<unmodifiable>0</unmodifiable>
+<values>long|short|default|forbid</values>
+<classType>com.xpn.xwiki.objects.classes.StaticListClass</classType>
+</cache>
+<code>
+<disabled>0</disabled>
+<name>code</name>
+<number>2</number>
+<prettyName>Code</prettyName>
+<rows>20</rows>
+<size>50</size>
+<unmodifiable>0</unmodifiable>
+<classType>com.xpn.xwiki.objects.classes.TextAreaClass</classType>
+</code>
+<name>
+<disabled>0</disabled>
+<name>name</name>
+<number>1</number>
+<prettyName>Name</prettyName>
+<size>30</size>
+<unmodifiable>0</unmodifiable>
+<classType>com.xpn.xwiki.objects.classes.StringClass</classType>
+</name>
+<parse>
+<disabled>0</disabled>
+<displayFormType>select</displayFormType>
+<displayType>yesno</displayType>
+<name>parse</name>
+<number>4</number>
+<prettyName>Parse content</prettyName>
+<unmodifiable>0</unmodifiable>
+<classType>com.xpn.xwiki.objects.classes.BooleanClass</classType>
+</parse>
+<use>
+<cache>0</cache>
+<disabled>0</disabled>
+<displayType>select</displayType>
+<multiSelect>0</multiSelect>
+<name>use</name>
+<number>3</number>
+<prettyName>Use this extension</prettyName>
+<relationalStorage>0</relationalStorage>
+<separator> </separator>
+<separators> ,|</separators>
+<size>1</size>
+<unmodifiable>0</unmodifiable>
+<values>currentPage=Always on this page|onDemand=On demand|always=Always on this wiki</values>
+<classType>com.xpn.xwiki.objects.classes.StaticListClass</classType>
+</use>
+</class>
+<name>Admin.UpgradeTool</name>
+<number>0</number>
+<className>XWiki.JavaScriptExtension</className>
+<guid>52f08711-c017-4473-9cdd-210c7915e972</guid>
+<property>
+<cache>default</cache>
+</property>
+<property>
+<code>var UpgradeTool = {};
+#set($url = $doc.getURL())
+UpgradeTool.commit = function(svnconfig, page, wiki) {
+  new Ajax.Request("${url}?action=commit&amp;svnconfig="+svnconfig+"&amp;page="+page+"&amp;wiki="+wiki+"&amp;xpage=plain&amp;outputSyntax=plain", {
+    onSuccess: function(response) {
+      new XWiki.widgets.Notification(response.responseText, "info"); 
+    }
+  });
+}
+
+UpgradeTool.update = function(svnconfig, page, language, wiki) {
+  new Ajax.Request("${url}?action=update&amp;svnconfig="+svnconfig+"&amp;page="+page+"&amp;language="+language+"&amp;wiki="+wiki+"&amp;xpage=plain&amp;outputSyntax=plain", {
+    asynchronous: false,
+    onSuccess: function(response) {      
+      new XWiki.widgets.Notification(response.responseText, "info"); 
+    }
+  });
+}
+
+UpgradeTool.updateWikis = function(svnconfig, page, language, wikisz) {
+  var wikis = wikisz.split(",")
+  wikis.each(function(wiki){
+    UpgradeTool.update(svnconfig, page, language, wiki);
+  });
+  new XWiki.widgets.Notification("SVN import done!", "done");
+  document.location.reload(true);
+}
+
+UpgradeTool.import = function(xar, page, language, wiki) {
+  new Ajax.Request("${url}?wiki="+wiki+"&amp;page="+page+"&amp;language="+language+"&amp;action=import"+"&amp;xar="+xar+"&amp;xpage=plain&amp;outputSyntax=plain", {
+    asynchronous: false,
+    onSuccess: function(response) {      
+      new XWiki.widgets.Notification(response.responseText, "info"); 
+    }
+  });
+}
+
+UpgradeTool.deletePage = function(page, language, wiki) {
+  new Ajax.Request("${url}?wiki="+wiki+"&amp;page="+page+"&amp;language="+language+"&amp;action=delete"+"&amp;xpage=plain&amp;outputSyntax=plain", {
+    asynchronous: false,
+    onSuccess: function(response) {      
+      new XWiki.widgets.Notification(response.responseText, "info"); 
+    }
+  });
+}
+
+UpgradeTool.deletePages = function(pages, wiki) {
+  var pagesz = "";
+  for (i = 0; i &lt; pages.length; i++) {
+    this.pagesz = pagesz + "&amp;pages="+pages[i];
+  }
+  new Ajax.Request("${url}?wiki="+wiki+pagesz+"&amp;action=delete"+"&amp;xpage=plain&amp;outputSyntax=plain", {
+    asynchronous: false,
+    onSuccess: function(response) {      
+      new XWiki.widgets.Notification(response.responseText, "info"); 
+    }
+  });
+}
+
+UpgradeTool.deleteAllPages = function(pagesz, wikisz) {
+  var wikis = wikisz.split(",")
+  var pages = pages.split(",");
+  wikis.each(function(wiki){
+    UpgradeTool.deletePages(pages, wiki);
+  });
+  new XWiki.widgets.Notification("Delete done!", "done");
+  //document.location.reload(true);
+}
+
+
+UpgradeTool.ajaxImporter = Class.create({
+  initialize: function (xar, pages, wikis) {
+    this.xar = xar;
+    this.pages = pages.split(",");
+    this.pagesURL = "";
+    for (i = 0; i &lt; this.pages.length; i++) {
+      this.pagesURL = this.pagesURL + "&amp;pages="+this.pages[i];
+    }
+    this.wikis = wikis.split(",");
+    this.index = 0;
+  },
+  import: function () {
+    var that = this;
+    if (this.index &lt; this.wikis.length) {
+      new Ajax.Request("${url}?"+"wiki="+this.wikis[this.index]+this.pagesURL+"&amp;xar="+this.xar+"&amp;action=import&amp;xpage=plain&amp;outputSyntax=plain", {        
+        asynchronous: false,
+        onSuccess: function(response) {
+          new XWiki.widgets.Notification(response.responseText, "info"); 
+          that.index++;          
+        }
+      });
+      this.import();
+    } else {
+      new XWiki.widgets.Notification("Import wikis done!", "done"); 
+      document.location.reload(true)
+    }
+  }
+});
+
+UpgradeTool.formImporter = Class.create({
+  initialize : function (formId, wikis) {
+    this.index = 0;
+    this.wikis = wikis.split(",");
+    this.params = $(formId).serialize(); 
+  }
+  ,import: function() {
+    var that = this;
+    if (this.index &lt; this.wikis.length) {      
+      new Ajax.Request("${url}?" + "&amp;wiki=" + this.wikis[this.index] + "&amp;" + this.params + "&amp;xpage=plain&amp;outputSyntax=plain", {        
+        asynchronous: false,
+        onSuccess: function(response) {
+          new XWiki.widgets.Notification(response.responseText, "info"); 
+          that.index++;          
+        }
+      });
+      this.import();
+    } else {
+      new XWiki.widgets.Notification("Import wikis done!", "done"); 
+      //document.location.reload(true)
+    }
+  }
+});
+
+UpgradeTool.formDeleter = Class.create({
+  initialize : function (formId, wikis) {
+    this.index = 0;
+    this.wikis = wikis.split(",");
+    this.params = $(formId).serialize(); 
+  }
+  ,delete: function() {
+    var that = this;
+    if (this.index &lt; this.wikis.length) {      
+      new Ajax.Request("${url}?" + "&amp;wiki=" + this.wikis[this.index] + "&amp;" + this.params + "&amp;xpage=plain&amp;outputSyntax=plain", {        
+        asynchronous: false,
+        onSuccess: function(response) {
+          new XWiki.widgets.Notification(response.responseText, "info"); 
+          that.index++;          
+        }
+      });
+      this.delete();
+    } else {
+      new XWiki.widgets.Notification("Delete pages done!", "done"); 
+      //document.location.reload(true)
+    }
+  }
+});
+
+var toggleCheckboxes = function (togglebox, elements) {
+  elements.each(function(item) {
+    item.checked = !item.checked;
+  });
+  //togglebox.checked = !togglebox.checked;
+}</code>
+</property>
+<property>
+<name>DIFF JSX</name>
+</property>
+<property>
+<parse>1</parse>
+</property>
+<property>
+<use>always</use>
+</property>
+</object>
+<object>
+<class>
+<name>XWiki.RequiredRightClass</name>
+<customClass></customClass>
+<customMapping></customMapping>
+<defaultViewSheet></defaultViewSheet>
+<defaultEditSheet></defaultEditSheet>
+<defaultWeb></defaultWeb>
+<nameField></nameField>
+<validationScript></validationScript>
+<level>
+<cache>0</cache>
+<disabled>0</disabled>
+<displayType>select</displayType>
+<multiSelect>0</multiSelect>
+<name>level</name>
+<number>1</number>
+<picker>0</picker>
+<prettyName>level</prettyName>
+<relationalStorage>0</relationalStorage>
+<separator> </separator>
+<separators> ,|</separators>
+<size>1</size>
+<sort>none</sort>
+<unmodifiable>0</unmodifiable>
+<validationMessage></validationMessage>
+<validationRegExp></validationRegExp>
+<values>edit|programming</values>
+<classType>com.xpn.xwiki.objects.classes.StaticListClass</classType>
+</level>
+</class>
+<name>Admin.UpgradeTool</name>
+<number>0</number>
+<className>XWiki.RequiredRightClass</className>
+<guid>f86a7341-887b-4876-ac6f-23509db0b877</guid>
+<property>
+<level>programming</level>
+</property>
+</object>
+<object>
+<class>
+<name>XWiki.StyleSheetExtension</name>
+<customClass></customClass>
+<customMapping></customMapping>
+<defaultViewSheet></defaultViewSheet>
+<defaultEditSheet></defaultEditSheet>
+<defaultWeb></defaultWeb>
+<nameField></nameField>
+<validationScript></validationScript>
+<cache>
+<cache>0</cache>
+<disabled>0</disabled>
+<displayType>select</displayType>
+<multiSelect>0</multiSelect>
+<name>cache</name>
+<number>5</number>
+<prettyName>Caching policy</prettyName>
+<relationalStorage>0</relationalStorage>
+<separator> </separator>
+<separators> ,|</separators>
+<size>1</size>
+<unmodifiable>0</unmodifiable>
+<values>long|short|default|forbid</values>
+<classType>com.xpn.xwiki.objects.classes.StaticListClass</classType>
+</cache>
+<code>
+<disabled>0</disabled>
+<name>code</name>
+<number>2</number>
+<prettyName>Code</prettyName>
+<rows>20</rows>
+<size>50</size>
+<unmodifiable>0</unmodifiable>
+<classType>com.xpn.xwiki.objects.classes.TextAreaClass</classType>
+</code>
+<name>
+<disabled>0</disabled>
+<name>name</name>
+<number>1</number>
+<prettyName>Name</prettyName>
+<size>30</size>
+<unmodifiable>0</unmodifiable>
+<classType>com.xpn.xwiki.objects.classes.StringClass</classType>
+</name>
+<parse>
+<disabled>0</disabled>
+<displayFormType>select</displayFormType>
+<displayType>yesno</displayType>
+<name>parse</name>
+<number>4</number>
+<prettyName>Parse content</prettyName>
+<unmodifiable>0</unmodifiable>
+<classType>com.xpn.xwiki.objects.classes.BooleanClass</classType>
+</parse>
+<use>
+<cache>0</cache>
+<disabled>0</disabled>
+<displayType>select</displayType>
+<multiSelect>0</multiSelect>
+<name>use</name>
+<number>3</number>
+<prettyName>Use this extension</prettyName>
+<relationalStorage>0</relationalStorage>
+<separator> </separator>
+<separators> ,|</separators>
+<size>1</size>
+<unmodifiable>0</unmodifiable>
+<values>currentPage=Always on this page|onDemand=On demand|always=Always on this wiki</values>
+<classType>com.xpn.xwiki.objects.classes.StaticListClass</classType>
+</use>
+</class>
+<name>Admin.UpgradeTool</name>
+<number>0</number>
+<className>XWiki.StyleSheetExtension</className>
+<guid>d371bafa-7b59-46a3-8adb-9eb55349b2b6</guid>
+<property>
+<cache>long</cache>
+</property>
+<property>
+<code>.diff {
+  overflow: auto;
+  white-space: pre-wrap;
+}
+
+.diffaddword {
+  color: $theme.notificationSuccessColor;
+  background-color: rgba(0, 255, 0, 0.15);
+}
+
+.diffremoveword {
+  color: $theme.notificationErrorColor;
+  text-decoration: line-through;
+  background-color: rgba(255, 0, 0, 0.15);
+}
+
+a.button:visited, a.button:link, a.button:active {
+    background-color: #2D2E30;
+    border: 1px solid #2D2E30;
+    border-radius: 3px 3px 3px 3px;
+    color: #FFFFFF;
+    cursor: pointer;
+    display: inline-block;
+    font: 700 0.8em/140% "Helvetica",sans-serif;
+    margin: 0;
+    padding: 2px 3px;
+    text-shadow: 0 1px 0;
+    text-transform: uppercase;
+}</code>
+</property>
+<property>
+<name>DIFF EXTENSIONS</name>
+</property>
+<property>
+<parse>0</parse>
+</property>
+<property>
+<use>currentPage</use>
+</property>
+</object>
+<content>{{velocity}}
+#set($diffTool = $xwiki.parseGroovyFromPage("Admin.UpgradeToolGroovy"))
+#set($discard = $diffTool.setContext($context, $xwiki))
+#if ("$!request.svnconfig" != "")
+  #set($svnTool = $xwiki.parseGroovyFromPage("SVNCode.SVNGroovy","SVNCode.SVNGroovy"))
+  #set($discard = $svnTool.setXWiki($xwiki, $context))
+  #set($discard = $svnTool.setSVNConfig($svnConfig))
+  #set($discard = $svnTool.initRepository())
+#end
+#if("$!request.action" != "")
+  #set ($activityTool = $xwiki.parseGroovyFromPage("Admin.UpgradeToolActivityGroovy"))
+  #set ($discard = $activityTool.initialize($context))
+  #if($request.action == "commit" &amp;&amp; $request.svnconfig &amp;&amp; $request.page &amp;&amp; $request.wiki)  
+    #set($pageDoc = $xwiki.getDocument("$request.wiki:$request.page"))
+    #if("$!request.language" != "")
+      #set($pageDoc = $pageDoc.getTranslatedDocument($request.language))
+    #end
+    #if(!$pageDoc.isNew() &amp;&amp; $svnTool)
+      #set($discard = $svnTool.commitFile($pageDoc, "UpgradeTool commit."))
+      COMMIT
+      #set ($discard = $activityTool.addEvent($pageDoc, "svnci"))
+    #else
+      FAIL COMMIT
+    #end
+  #elseif ($request.action == "update" &amp;&amp; $request.svnconfig &amp;&amp; $request.page &amp;&amp; $request.wiki)
+    #set ($pageDoc = $xwiki.getDocument("$request.wiki:$request.page"))
+    #if ("$!request.language" != "")
+      #set ($pageDoc = $pageDoc.getTranslatedDocument($request.language))
+    #end
+    #if ($svnTool)
+      ##set($discard = $svnTool.updatePage($pageDoc, "UpgradeTool update."))
+      $!svnTool.updatePage($pageDoc) UPDATED ${pageDoc.wiki}:${pageDoc}#if ("$!pageDoc.language" != "")[$pageDoc.language]#end
+      #set ($discard = $activityTool.addEvent($pageDoc, "svnup"))
+    #else
+      FAIL UPDATE
+    #end
+  #elseif ($request.action == "import" &amp;&amp; $request.xar &amp;&amp; $request.page &amp;&amp; $request.language &amp;&amp; $request.wiki)  
+    #set($db = $context.getDatabase())
+    #set($discard = $context.setDatabase($request.wiki))
+    #set($importer = $xwiki.package)
+    #set($discard = $importer.Import($diffTool.getXarInputStream($request.xar)))
+    #set($discard = $importer.setPreserveVersion(true))
+    #set($discard = $importer.setWithVersions(false))
+    #set($discard = $importer.setBackupPack(false))
+    #set($filelist = $importer.getFiles())
+    #foreach($file in $filelist)    
+      #if("$file.fullName" == "$request.page" &amp;&amp; "$file.language" == "$request.language")
+        ## set action OVERWRITE
+        #set($discard = $importer.setDocumentAction($request.page, $request.language, 0))
+      #else
+        ## set action SKIP
+        #set($discard = $importer.setDocumentAction($file.fullName, $file.language, 1))
+      #end
+    #end      
+    #set($discard = $importer.install())
+      $request.wiki
+      Import status = #if($importer.getStatus() == 0) Impossible #elseif ($importer.getStatus() == 4) Error #elseif ($importer.getStatus() == 2) Ok #elseif ($importer.getStatus() == 1) Already exist. #else Unknown #end
+    #if ($importer.getErrors().size() &gt; 0)
+      Errors = $importer.getErrors()   
+    #else
+      #set($installed = $importer.getInstalled())
+      Installed = $installed
+    #end
+    #set($discard = $context.setDatabase($db))
+    #foreach ($fullName in $installed)
+      #set ($discard = $activityTool.addEvent($xwiki.getDocument("${request.wiki}:${fullName}"), "import"))
+    #end
+  #elseif ($request.action == "import" &amp;&amp; $request.xar &amp;&amp; $request.pages &amp;&amp; $request.wiki)  
+    #set ($pages = $util.arrayList)  
+    #foreach ($page in $request.getParameterValues("pages"))
+      #set ($discard = $pages.add("$page"))
+    #end  
+    #set($db = $context.getDatabase())
+    #set($discard = $context.setDatabase($request.wiki))
+    #set($importer = $xwiki.package)
+    #set($discard = $importer.Import($diffTool.getXarInputStream($request.xar)))
+    #set($discard = $importer.setPreserveVersion(true))
+    #set($discard = $importer.setWithVersions(false))
+    #set($discard = $importer.setBackupPack(false))
+    #set($filelist = $importer.getFiles())
+    #foreach ($file in $filelist)    
+      #set ($filePath = $file.fullName.replace('.', '/'))
+      #if ("$file.language" != "")
+        #set ($filePath = "${filePath}.${file.language}")
+      #end
+      #set ($filePath = "${filePath}.xml")
+      #if ($pages.contains("$filePath"))
+        ## set action OVERWRITE
+        #set($discard = $importer.setDocumentAction($file.fullName, $file.language, 0))
+      #else
+        ## set action SKIP
+        #set($discard = $importer.setDocumentAction($file.fullName, $file.language, 1))
+      #end
+    #end      
+    #set($discard = $importer.install())
+    $request.wiki
+    Import status = #if($importer.getStatus() == 0) Impossible #elseif ($importer.getStatus() == 4) Error #elseif ($importer.getStatus() == 2) Ok #elseif ($importer.getStatus() == 1) Already exist. #else Unknown #end
+    #if ($importer.getErrors().size() &gt; 0)
+      Errors = $importer.getErrors()   
+    #else
+      #set($installed = $importer.getInstalled())
+      Installed = $installed
+    #end
+    #set($discard = $context.setDatabase($db))
+    #foreach ($fullName in $installed)
+      #set ($discard = $activityTool.addEvent($xwiki.getDocument("${request.wiki}:${fullName}"), "import"))
+    #end
+  #elseif ($request.action == "delete" &amp;&amp; $request.page &amp;&amp; $request.language &amp;&amp; $request.wiki)
+    #set ($wikiDoc = $xwiki.getDocument("$request.wiki:$request.page"))
+    #if (!$wikiDoc.isNew())
+      #if ("$!request.language" != "")
+        #set ($wikiDoc = $wikiDoc.getTranslatedDocument("$request.language"))  
+      #end
+      #set ($discard = $activityTool.addEvent($wikiDoc, "delete"))
+      DELETED $wikiDoc.wiki:$wikiDoc.fullName[$!wikiDoc.language]    
+      #set ($discard = $wikiDoc.delete())
+    #else
+      DELETE FAILED  
+    #end 
+  #elseif ($request.action == "delete" &amp;&amp; $request.pages &amp;&amp; $request.wiki)
+    #set ($pages = $util.arrayList)  
+    #foreach ($page in $request.getParameterValues("pages"))
+      #set ($discard = $pages.add("$page"))
+    #end
+    #set ($db = $context.getDatabase())
+    #set ($discard = $context.setDatabase($request.wiki))
+    #foreach ($page in $pages)
+      #set ($pagesplit = $page.split("\."))   
+      #set ($pageFullName = $pagesplit.get(0).replace("/", "."))
+      #set ($wikiDoc = $xwiki.getDocument("${pageFullName}"))   
+      #if (!$wikiDoc.isNew())
+        #if ($pagesplit.size() &gt; 1 &amp;&amp; "$!pagesplit.get(1)" != "")    
+          #set ($wikiDoc = $wikiDoc.getTranslatedDocument("$pagesplit.get(1)"))
+        #end     
+        ${wikiDoc.fullName}#if ($wikiDoc.language != "")[${wikiDoc.language}]#end 
+        #set ($discard = $activityTool.addEvent($wikiDoc, "delete"))
+        #set ($discard = $wikiDoc.delete())
+      #else
+        FAILED $pageFullName 
+      #end
+    #end
+    #set ($discard = $context.setDatabase($db))
+  #end
+#elseif ($request.source &amp;&amp; $request.target)
+  #includeMacros("Admin.Diff")
+  #set($svnConfig = $request.svnconfig) 
+  #set($sourceURL = $request.source)
+  #set($targetURL = $request.target)
+  #set($templateWiki = $request.template)
+  #set($wikis = $request.wikis)
+  #if("$!wikis" != "")
+    #set($wikis = $wikis.split(","))
+  #else
+    #set($wikis = [])
+  #end
+  #set($sourceXAR = $diffTool.getZipContentUTF8($sourceURL)) 
+  #set($targetXAR = $diffTool.getZipContentUTF8($targetURL))
+  #if($request.page)
+    #if ($sourceXAR.keySet().contains($request.page))
+      #set ($sourceDoc = $diffTool.getDocument($sourceXAR.get($request.page)))
+      #set ($page = $sourceDoc.getFullName())
+      #set ($language = $sourceDoc.getLanguage())
+    #end
+  #if($targetXAR.keySet().contains($request.page))
+    #set($targetDoc = $diffTool.getDocument($targetXAR.get($request.page)))
+  #end
+  #if (!$sourceXAR.keySet().contains($request.page))
+    #set($page = $targetDoc.getFullName())
+    #set($language = $targetDoc.getLanguage())
+  #end
+  #set($templateDoc = $xwiki.getDocument("${templateWiki}:${page}"))
+  #if($language != "")
+    #set($templateDoc = $templateDoc.getTranslatedDocument($language))
+  #end
+  #set($wikiDocs = $util.arrayList)
+  #foreach($wiki in $wikis)
+    #set($wikiDoc = $xwiki.getDocument("${wiki}:${page}"))
+    #if($language != "")
+    #set($wikiDoc = $wikiDoc.getTranslatedDocument($language))
+   #end
+   #set($discard = $wikiDocs.add($wikiDoc))
+  #end  
+  #if ($svnTool)
+**SVN status**
+  #set($status = $svnTool.checkPageStatus($templateDoc))
+$status
+  #if($status.status != "A")
+   #set($svnDoc = $diffTool.getDocument($svnTool.getFileContentAsString($templateDoc.space, $templateDoc.name, $templateDoc.language)))
+   #set($origdoc = $svnDoc)
+   #set($rev1 = "SVN")
+   #set($newdoc = $templateDoc)
+   #set($rev2 = "$templateDoc.wiki")
+**$rev1 -&gt; $rev2**
+#changes($origdoc, $rev1, $newdoc, $rev2)
+[[SVN import&gt;&gt;||href="javascript:void(0);" onclick="UpgradeTool.update('$svnConfig', '$templateDoc.fullName', '$templateDoc.language', '$templateDoc.wiki'); return false;" class="button"]]
+
+  #end
+  #end
+#if (!$templateDoc.isNew() &amp;&amp; $sourceDoc)
+  #set($origdoc = $sourceDoc)
+  #set($rev1 = "xar272")
+  #set($newdoc = $diffTool.getDocument($templateDoc.toXML()))
+  #set($rev2 = "$templateDoc.wiki")
+**$rev1 -&gt; [[$rev2&gt;&gt;$templateDoc.wiki:$templateDoc.fullName]]**
+#changes($origdoc, $rev1, $newdoc, $rev2)
+#end #if ($svnTool)[[SVN commit&gt;&gt;||href="javascript:void(0);" onclick="UpgradeTool.commit('$svnConfig', '$templateDoc.fullName', '$templateDoc.wiki'); return false;" class="button"]]#end
+
+#if (!$templateDoc.isNew() &amp;&amp; $targetDoc)
+  #set($origdoc = $diffTool.getDocument($templateDoc.toXML()))
+  #set($rev1 = "$templateDoc.wiki")
+  #set($newdoc = $targetDoc)
+  #set($rev2 = "xar351")
+**[[$rev1&gt;&gt;$templateDoc.wiki:$templateDoc.fullName]] -&gt; $rev2**
+#changes($origdoc, $rev1, $newdoc, $rev2)
+#end [[XAR import&gt;&gt;||href="javascript:void(0);" onclick="UpgradeTool.import('$escapetool.url($targetURL)', '$templateDoc.fullName', '$templateDoc.language', '$templateDoc.wiki'); return false;" class="button"]]
+
+#if (!$templateDoc.isNew())
+  #foreach($wikiDoc in $wikiDocs)
+   #set($origdoc = $diffTool.getDocument($templateDoc.toXML()))
+   #set($rev1 = "$templateDoc.wiki")
+   #set($newdoc = $diffTool.getDocument($wikiDoc.toXML()))
+   #set($rev2 = "$wikiDoc.wiki")
+**[[$rev1&gt;&gt;$templateDoc.wiki:$templateDoc.fullName]] -&gt; [[$rev2&gt;&gt;$wikiDoc.wiki:$wikiDoc.fullName]]**
+#changes($origdoc, $rev1, $newdoc, $rev2)
+[[SVN import&gt;&gt;||href="javascript:void(0);" onclick="UpgradeTool.update('$svnConfig', '$wikiDoc.fullName', '$wikiDoc.language', '$wikiDoc.wiki'); return false;" class="button"]] [[XAR import&gt;&gt;||href="javascript:void(0);" onclick="UpgradeTool.import('$escapetool.url($targetURL)', '$wikiDoc.fullName', '$wikiDoc.language', '$wikiDoc.wiki'); return false;" class="button"]]
+
+  #end
+#end
+
+
+[[SVN import all&gt;&gt;||href="javascript:void(0);" onclick="UpgradeTool.updateWikis('$svnConfig', '$templateDoc.fullName', '$templateDoc.language', '$request.wikis'); return false;" class="button"]]  [[XAR import all&gt;&gt;||href="javascript:void(0);" onclick="var importer = new UpgradeTool.ajaxImporter('$request.target', '$request.page', '$request.wikis'); importer.import(); return false;" class="button"]]
+ #else
+  #set($standardAndUpgraded = $util.arrayList)
+  #set($standardAndNotUpgraded = $util.arrayList)
+  #set($nonstandardAndUpdated = $util.arrayList)
+  #set($nonstandardAndNotUpdated = $util.arrayList)
+  #set($newAndUpgraded = $util.arrayList)
+  #set($newAndNotUpgraded = $util.arrayList)
+  #set($newAndUpdated = $util.arrayList)
+  #set($newAndNotUpdated = $util.arrayList)
+  #set($toDelete = $util.arrayList)
+  #set($keys = $sorttool.sort($sourceXAR.keySet()))
+  #foreach ($key in $keys)  
+   #if($key != "package.xml")
+    #set($sourceDoc = $diffTool.getDocument($sourceXAR.get($key)))
+    #set($page = $sourceDoc.getFullName())
+    #set($language = $sourceDoc.getLanguage())    
+    #set($templateDoc = $xwiki.getDocument("${templateWiki}:${page}"))    
+    #if($language != "" &amp;&amp; $templateDoc.getTranslationList().contains($language))
+     #set($templateDoc = $templateDoc.getTranslatedDocument($language))
+    #end
+    #if ("$!language" == "" || $templateDoc.getTranslationList().contains($language))
+     #if($targetXAR.keySet().contains($key))
+      #set($targetDoc = $diffTool.getDocument($targetXAR.get($key)))
+      #if(!$sourceDoc.getObject("XWiki.XWikiPreferences")&amp;&amp;!$sourceDoc.getObject("XWiki.XWikiGroups"))      
+       #set($wikiDocs = $util.arrayList)
+       #foreach($wiki in $wikis)
+        #set($wikiDoc = $xwiki.getDocument("${wiki}:${page}"))
+        #if($language != "" &amp;&amp; $wikiDoc.getTranslationList().contains($language))
+         #set($wikiDoc = $wikiDoc.getTranslatedDocument($language))
+        #end
+        #if ("$!language" == "" || $wikiDoc.getTranslationList().contains($language))
+##       #if($compare == false &amp;&amp; $diffTool.compareDoc($diffTool.getDocument($templateDoc.toXML()), $diffTool.getDocument($wikiDoc.toXML())))
+##        #set($compare = true)
+##       #end
+         #set($discard = $wikiDocs.add($wikiDoc))
+        #end
+       #end
+       #if (!$diffTool.compareDoc($targetDoc, $diffTool.getDocument($templateDoc.toXML())))
+        ## standard and upgraded
+        #set ($discard = $standardAndUpgraded.add($templateDoc))
+       #else
+        #if ($diffTool.compareDoc($sourceDoc, $diffTool.getDocument($templateDoc.toXML())))
+         ##set ($discard = $nonstandardAndNotUpgraded.add($templateDoc))
+         ## check svn
+         #if ($svnTool)
+           #set($status = $svnTool.checkPageStatus($templateDoc))
+           #if($status.status != "A")
+             ## is on svn
+             #set ($svnDoc = $diffTool.getDocument($svnTool.getFileContentAsString($templateDoc.space, $templateDoc.name, $templateDoc.language)))
+             #if ($diffTool.compareDoc($svnDoc, $diffTool.getDocument($templateDoc.toXML())))
+               ## not updated
+               #set ($discard = $nonstandardAndNotUpdated.add($templateDoc))
+             #else
+               #set ($discard = $nonstandardAndUpdated.add($templateDoc))
+             #end
+           #else
+             #set ($discard = $nonstandardAndNotUpdated.add($templateDoc))
+           #end
+         #end
+        #else
+         #set($discard = $standardAndNotUpgraded.add($templateDoc))
+        #end
+       #end
+      #end    
+     #else ## targetXAR not contains
+      #if (!$templateDoc.isNew())
+       #set ($discard = $toDelete.add($templateDoc))
+      #end
+     #end
+    #end
+   #end
+  #end
+  ##**New documents**
+  #set($keys = $sorttool.sort($targetXAR.keySet()))
+  #foreach($key in $keys)
+   #if($key != "package.xml" &amp;&amp; !$sourceXAR.keySet().contains($key))
+    #set($targetDoc = $diffTool.getDocument($targetXAR.get($key)))
+    #set($page = $targetDoc.getFullName())
+    #set($language = $targetDoc.getLanguage())    
+    #set ($templateDoc = $xwiki.getDocument("$templateWiki:$page"))
+    #if (!$templateDoc.isNew())
+     #if ($language)
+      #set($templateDoc = $templateDoc.getTranslatedDocument($language))
+     #end
+     #if ($diffTool.compareDoc($targetDoc, $diffTool.getDocument($templateDoc.toXML())))
+      #set ($discard = $newAndNotUpgraded.add($targetDoc))
+     #else
+      #set($discard = $newAndUpgraded.add($templateDoc))
+     #end
+    #else
+     #set ($discard = $newAndNotUpgraded.add($targetDoc))
+    #end
+   #end
+  #end ## end foreach
+
+**STANDARD AND UPGRADED**
+{{info}}Pages not modified from standard distribution 2.7.2 and upgraded to 3.5.1 on all wikis.{{/info}}
+#foreach ($upDoc in $standardAndUpgraded)
+ #set ($key = "${upDoc.space}/${upDoc.name}")
+ #if ("$!upDoc.language" != "")
+  #set ($key = "${key}.${upDoc.language}")
+ #end
+ #set ($key = "${key}.xml")
+* **$upDoc.fullName** #if ($upDoc.language != "") [${upDoc.language}] #end : [[View wiki Diffs&gt;&gt;?page=${key}&amp;template=${request.template}&amp;wikis=${request.wikis}&amp;svnconfig=${request.svnconfig}&amp;source=${request.source}&amp;target=${request.target}]] 
+#end
+
+**NONSTANDARD AND UPDATED**
+{{info}}Pages modified from standard distribution 2.7.2 and commited on svn repository.{{/info}}
+#foreach ($upDoc in $nonstandardAndUpdated)
+ #set ($key = "${upDoc.space}/${upDoc.name}")
+ #if ("$!upDoc.language" != "")
+  #set ($key = "${key}.${upDoc.language}")
+ #end
+ #set ($key = "${key}.xml")
+* **$upDoc.fullName** #if ($upDoc.language != "") [${upDoc.language}] #end : [[View wiki Diffs&gt;&gt;?page=${key}&amp;template=${request.template}&amp;wikis=${request.wikis}&amp;svnconfig=${request.svnconfig}&amp;source=${request.source}&amp;target=${request.target}]] 
+#end
+
+
+**STANDARD AND NOT UPGRADED**
+{{info}}Pages not modified from standard distribution 2.7.2 and not upgraded to 3.5.1.{{/info}}
+
+{{html wiki="true"}}
+&lt;form id="importstd" name="import-form" action="$doc.getURL('view', 'xpage=plain&amp;outputSyntax=plain')" method="get" onsubmit="return false;"&gt;
+#set ($keySpace = "")
+#foreach ($upDoc in $standardAndNotUpgraded)
+ #set ($key = "${upDoc.space}/${upDoc.name}")
+ #if ("$!upDoc.language" != "")
+  #set ($key = "${key}.${upDoc.language}")
+ #end
+ #set ($key = "${key}.xml")
+ #if ("$upDoc.space" != "$keySpace")
+  #set ($keySpace = $upDoc.space)  
+* &lt;input type="checkbox" onclick="toggleCheckboxes($(this), $$('input[type=checkbox][class=${keySpace}]'))" /&gt; **$keySpace**
+ #end
+* &lt;input type="checkbox" name="pages" class="$upDoc.space" value="$key" id="$key" /&gt; $upDoc.fullName #if ($upDoc.language != "") [${upDoc.language}] #end : [[View wiki Diffs&gt;&gt;?page=${key}&amp;template=${request.template}&amp;wikis=${request.wikis}&amp;svnconfig=${request.svnconfig}&amp;source=${request.source}&amp;target=${request.target}]]
+#end
+* &lt;input type="checkbox" onclick="toggleCheckboxes($(this), $$('input[type=checkbox]'))" /&gt; **Select all**
+&lt;input type="hidden" name="action" value="import" /&gt;
+{{html}}
+&lt;input type="hidden" name="xar" value="$request.target" /&gt;
+{{/html}}
+&lt;/form&gt;
+&lt;br /&gt;
+[[XAR import all checked&gt;&gt;||href="javascript:void(0);" class="button" onclick="var importer = new UpgradeTool.formImporter('importstd', '${request.template},${request.wikis}'); importer.import(); return false;"]]
+{{/html}}
+
+
+**NONSTANDARD AND NOT UPDATED**
+{{info}}Pages modified form standard distribution 2.7.2 and not commited on svn repository.{{/info}}
+#foreach ($upDoc in $nonstandardAndNotUpdated)
+ #set ($key = "${upDoc.space}/${upDoc.name}")
+ #if ("$!upDoc.language" != "")
+  #set ($key = "${key}.${upDoc.language}")
+ #end
+ #set ($key = "${key}.xml")
+* **$upDoc.fullName** #if ($upDoc.language != "") [${upDoc.language}] #end : [[View wiki Diffs&gt;&gt;?page=${key}&amp;template=${request.template}&amp;wikis=${request.wikis}&amp;svnconfig=${request.svnconfig}&amp;source=${request.source}&amp;target=${request.target}]] 
+#end
+
+**STANDARD TO DELETE**
+{{info}}Pages not modified from standard distribution 2.7.2 but not required in the new 3.5.1 distribution.{{/info}}
+
+{{html wiki="true"}}
+&lt;form id="delete" action="" method="get" &gt;
+#set ($keySpace = "")
+#foreach ($upDoc in $toDelete)
+ #set ($key = "${upDoc.space}/${upDoc.name}")
+ #if ("$!upDoc.language" != "")
+  #set ($key = "${key}.${upDoc.language}")
+ #end
+ #set ($key = "${key}.xml")
+ #if ("$upDoc.space" != "$keySpace")
+  #set ($keySpace = $upDoc.space)  
+* &lt;input type="checkbox" onclick="toggleCheckboxes($(this), $$('input[type=checkbox][class=${keySpace}]'))" /&gt; **$keySpace**
+ #end
+* &lt;input type="checkbox" name="pages" class="$upDoc.space" value="$key" id="$key" /&gt; $upDoc.fullName #if ("$!upDoc.language" != "") [${upDoc.language}] #end
+
+#end
+* &lt;input type="checkbox" onclick="toggleCheckboxes($(this), $$('input[type=checkbox]'))" /&gt; **Select all**
+&lt;input type="hidden" name="action" value="delete" /&gt;
+&lt;/form&gt;
+&lt;br /&gt;
+[[Delete all checked&gt;&gt;||href="javascript:void(0);" class="button" onclick="var deleter = new UpgradeTool.formDeleter('delete', '${request.template},${request.wikis}'); deleter.delete(); return false;"]]
+{{/html}}
+
+**STANDARD NEW UPGRADED**
+{{info}}Pages new in 3.5.1 distribution and imported on all wikis.{{/info}}
+#foreach ($upDoc in $newAndUpgraded)
+ #set ($key = "${upDoc.space}/${upDoc.name}")
+ #if ("$!upDoc.language" != "")
+  #set ($key = "${key}.${upDoc.language}")
+ #end
+ #set ($key = "${key}.xml")
+* **$upDoc.fullName** #if ("$!upDoc.language" != "") [${upDoc.language}] #end : [[View wiki Diffs&gt;&gt;?page=${key}&amp;template=${request.template}&amp;wikis=${request.wikis}&amp;svnconfig=${request.svnconfig}&amp;source=${request.source}&amp;target=${request.target}]] 
+#end
+
+**STANDARD NEW AND NOT UPGRADED**
+{{info}}Pages new in 3.5.1 distribution and not imported on all wikis.{{/info}}
+
+{{html wiki="true"}}
+&lt;form id="importnew" action="" method="get" &gt;
+#set ($keySpace = "")
+#foreach ($upDoc in $newAndNotUpgraded)
+ #set ($key = "${upDoc.space}/${upDoc.name}")
+ #if ("$!upDoc.language" != "")
+  #set ($key = "${key}.${upDoc.language}")
+ #end
+ #set ($key = "${key}.xml")
+ #if ("$upDoc.space" != "$keySpace")
+  #set ($keySpace = $upDoc.space)  
+* &lt;input type="checkbox" onclick="toggleCheckboxes($(this), $$('input[type=checkbox][class=${keySpace}]'))" /&gt; **$keySpace**
+ #end
+* &lt;input type="checkbox" name="pages" class="$upDoc.space" value="$key" id="$key" /&gt; $upDoc.fullName #if ("$!upDoc.language" != "") [${upDoc.language}] #end : #if (!$xwiki.getDocument("${templateWiki}:${upDoc.fullName}").isNew()) [[View wiki Diffs&gt;&gt;?page=${key}&amp;template=${request.template}&amp;wikis=${request.wikis}&amp;svnconfig=${request.svnconfig}&amp;source=${request.source}&amp;target=${request.target}]]#end [[XAR import&gt;&gt;||href="javascript:void(0);" onclick="UpgradeTool.importWikis('$escapetool.url($targetURL)', '$!upDoc.fullName', '$!upDoc.language', '${templateWiki},${request.wikis}'); return false;" class="button"]]
+#end
+* &lt;input type="checkbox" onclick="toggleCheckboxes($(this), $$('input[type=checkbox]'))" /&gt; **Select all**
+&lt;input type="hidden" name="action" value="import" /&gt;
+{{html}}
+&lt;input type="hidden" name="xar" value="$request.target" /&gt;
+{{/html}}
+&lt;/form&gt;
+&lt;br /&gt;
+[[XAR import all&gt;&gt;||class="button" onclick="var importer = new UpgradeTool.formImporter('importnew', '${request.template},${request.wikis}'); importer.import(); return false;"]]
+{{/html}}
+
+ #end ## no $request.page
+#else
+ #set($source = "http://maven.xwiki.org/releases/org/xwiki/enterprise/xwiki-enterprise-wiki/2.7.2/xwiki-enterprise-wiki-2.7.2.xar")
+ #set($target = "http://maven.xwiki.org/releases/org/xwiki/enterprise/xwiki-enterprise-ui-all/3.5.1/xwiki-enterprise-ui-all-3.5.1.xar")
+{{html clean=false}}
+&lt;form action=""&gt;
+&lt;strong&gt;Source URL:&lt;/strong&gt;&lt;br /&gt;
+&lt;input type="text" name="source" value="$source" size="120" /&gt;
+&lt;br /&gt;
+&lt;strong&gt;Target URL:&lt;/strong&gt;&lt;br /&gt;
+&lt;input type="text" name="target" value="$target" size="120" /&gt;
+&lt;br /&gt;
+&lt;strong&gt;SVN Config:&lt;/strong&gt;&lt;br /&gt;
+&lt;input type="text" name="svnconfig" value="$!svnconfig" size="120" /&gt;
+&lt;br /&gt;
+#set($WikiManager = $services.wikimanager)
+#set($wikiList = $WikiManager.getAllWikis())
+$wikiList
+&lt;br /&gt;
+&lt;strong&gt;Template wiki:&lt;/strong&gt;&lt;br /&gt;
+&lt;input type="text" name="template" value="" size="120" /&gt;
+&lt;br /&gt;
+&lt;strong&gt;Wikis:&lt;/strong&gt;&lt;br /&gt;
+&lt;input type="text" name="wikis" value="" size="120" /&gt;
+&lt;br /&gt;
+&lt;br /&gt;
+&lt;input type="submit" value="Go" /&gt;
+&lt;/form&gt;
+{{/html}}
+#end
+{{/velocity}}</content></xwikidoc>

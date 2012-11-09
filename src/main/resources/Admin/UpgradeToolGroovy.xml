@@ -1,0 +1,585 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xwikidoc>
+<web>Admin</web>
+<name>UpgradeToolGroovy</name>
+<language></language>
+<defaultLanguage>en</defaultLanguage>
+<translation>0</translation>
+<parent></parent>
+<creator>XWiki.Admin</creator>
+<author>XWiki.Admin</author>
+<customClass></customClass>
+<contentAuthor>XWiki.Admin</contentAuthor>
+<creationDate>1262300400000</creationDate>
+<date>1352467809000</date>
+<contentUpdateDate>1352467809000</contentUpdateDate>
+<version>3.1</version>
+<title>Diff Upgrade Groovy Class </title>
+<template></template>
+<defaultTemplate></defaultTemplate>
+<validationScript></validationScript>
+<comment></comment>
+<minorEdit>false</minorEdit>
+<syntaxId>xwiki/2.0</syntaxId>
+<hidden>false</hidden>
+<object>
+<class>
+<name>XWiki.RequiredRightClass</name>
+<customClass></customClass>
+<customMapping></customMapping>
+<defaultViewSheet></defaultViewSheet>
+<defaultEditSheet></defaultEditSheet>
+<defaultWeb></defaultWeb>
+<nameField></nameField>
+<validationScript></validationScript>
+<level>
+<cache>0</cache>
+<disabled>0</disabled>
+<displayType>select</displayType>
+<multiSelect>0</multiSelect>
+<name>level</name>
+<number>1</number>
+<picker>0</picker>
+<prettyName>level</prettyName>
+<relationalStorage>0</relationalStorage>
+<separator> </separator>
+<separators> ,|</separators>
+<size>1</size>
+<sort>none</sort>
+<unmodifiable>0</unmodifiable>
+<validationMessage></validationMessage>
+<validationRegExp></validationRegExp>
+<values>edit|programming</values>
+<classType>com.xpn.xwiki.objects.classes.StaticListClass</classType>
+</level>
+</class>
+<name>Admin.UpgradeToolGroovy</name>
+<number>0</number>
+<className>XWiki.RequiredRightClass</className>
+<guid>30ad5d2c-85f1-4bc4-8817-097fbd5fdd37</guid>
+<property>
+<level>programming</level>
+</property>
+</object>
+<content>/* Groovy Class #* */
+
+import java.util.*
+import java.net.URL;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.Map;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
+import java.io.*;
+import com.xpn.xwiki.doc.XWikiDocument;
+import com.xpn.xwiki.api.Document;
+import org.suigeneris.jrcs.diff.delta.Delta;
+import com.xpn.xwiki.doc.AttachmentDiff;
+import com.xpn.xwiki.doc.MetaDataDiff;
+
+import com.xpn.xwiki.objects.*;
+import com.xpn.xwiki.objects.classes.*;
+import com.xpn.xwiki.XWikiContext;
+import com.xpn.xwiki.XWikiException;
+
+import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.StringEscapeUtils;
+
+import org.suigeneris.jrcs.diff.Diff;
+import org.suigeneris.jrcs.diff.Revision;
+import org.suigeneris.jrcs.diff.delta.Chunk;
+import org.suigeneris.jrcs.diff.delta.Delta;
+import org.suigeneris.jrcs.util.ToString;
+import org.xwiki.xml.XMLUtils;
+
+class Diff {
+  def xwiki;
+  def context;
+
+  public setContext(context, xwiki) {
+    this.xwiki = xwiki
+    this.context = context
+  }
+
+  public clean1(content) {
+    return content.replaceAll("\r", "").replaceAll("\n", "").replaceAll("(?s)&lt;attachment&gt;(.*?)&lt;content&gt;(.*?)&lt;/content&gt;(.*?)&lt;/attachment&gt;", "&lt;attachment&gt;\$1&lt;content&gt;&lt;/content&gt;\$3&lt;/attachment&gt;").replaceAll("(?s)&lt;guid&gt;(.*?)&lt;/guid&gt;", "&lt;guid&gt;&lt;/guid&gt;").replaceAll("(?s)&lt;date&gt;(.*?)&lt;/date&gt;", "").replaceAll("(?s)&lt;author&gt;(.*?)&lt;/author&gt;", "").replaceAll("(?s)&lt;version&gt;(.*?)&lt;/version&gt;", "").replaceAll("(?s)&lt;comment&gt;(.*?)&lt;/comment&gt;", "").replaceAll("(?s)&lt;minorEdit&gt;(.*?)&lt;/minorEdit&gt;", "").replaceAll("(?s)&lt;defaultLanguage&gt;(.*?)&lt;/defaultLanguage&gt;", "")
+  }
+
+  public clean2(content) {
+    return content.replaceAll("\r", "").replaceAll("(?s)&lt;attachment&gt;(.*?)&lt;content&gt;(.*?)&lt;/content&gt;(.*?)&lt;/attachment&gt;", "&lt;attachment&gt;\$1&lt;content&gt;&lt;/content&gt;\$3&lt;/attachment&gt;").replaceAll("(?s)&lt;guid&gt;(.*?)&lt;/guid&gt;", "&lt;guid&gt;&lt;/guid&gt;").replaceAll("(?s)&lt;date&gt;(.*?)&lt;/date&gt;", "").replaceAll("(?s)&lt;author&gt;(.*?)&lt;/author&gt;", "").replaceAll("(?s)&lt;version&gt;(.*?)&lt;/version&gt;", "").replaceAll("(?s)&lt;comment&gt;(.*?)&lt;/comment&gt;", "").replaceAll("(?s)&lt;minorEdit&gt;(.*?)&lt;/minorEdit&gt;", "").replaceAll("(?s)&lt;defaultLanguage&gt;(.*?)&lt;/defaultLanguage&gt;", "")
+  }
+
+ 
+  public save(filename, content, bclean) {
+   FileOutputStream fis = new FileOutputStream(new File("/tmp/${filename}"));
+   def data = (bclean) ? clean1(content) : content
+   fis.write(data.getBytes());
+   fis.close();
+  }
+
+  boolean compare(oldContent, newContent) {
+        oldContent = clean1(oldContent)
+        newContent = clean1(newContent)
+        return !oldContent.equals(newContent);
+  }
+
+  String diff(def oldContent, def newContent) {
+        oldContent = clean2(oldContent)
+        newContent = clean2(newContent)
+        return xwiki.diff.getDifferencesAsHTML(oldContent, newContent, false);
+  }
+
+  public getDocument(content)
+  {
+      def newdoc = new XWikiDocument();
+      newdoc.fromXML(content);
+      return new Document(newdoc, context.getContext());
+  }
+
+  public getXMLFromString(content) {
+      def newdoc = new XWikiDocument();
+      newdoc.fromXML(content);
+      return getXML2(newdoc);
+  }
+
+  public getXML(pagedoc) {
+      def clonedDoc = pagedoc.document.clone();
+      return getXML2(clonedDoc);
+  }
+
+  public getXML2(clonedDoc) {
+        def defaultUser = "XWiki.Admin";
+        def defaultDate = new Date("01/01/2010");
+
+       // remove Tag object
+        if (clonedDoc.getObject("XWiki.TagClass")) {
+          clonedDoc.removeObjects("XWiki.TagClass");
+        }//
+        // remove rigths objects
+       if (clonedDoc.getObject("XWiki.XWikiRights")) {
+          clonedDoc.removeObjects("XWiki.XWikiRights");
+        }//
+
+        if (defaultUser &amp;&amp; defaultUser!="") {
+          clonedDoc.setCreator(defaultUser);
+          clonedDoc.setContentAuthor(defaultUser);
+          clonedDoc.setAuthor(defaultUser);
+        } else {
+          clonedDoc.setCreator(clonedDoc.getAuthor());
+          clonedDoc.setContentAuthor(clonedDoc.getAuthor());
+        }
+    
+        if (defaultDate &amp;&amp; defaultDate!="") {
+          clonedDoc.setCreationDate(defaultDate);
+          clonedDoc.setContentUpdateDate(defaultDate);
+          clonedDoc.setDate(defaultDate);
+          clonedDoc.setVersion("1.1");
+        } else {
+          clonedDoc.setContentUpdateDate(clonedDoc.getDate())
+          clonedDoc.setCreationDate(clonedDoc.getDate())
+          clonedDoc.setVersion("1.1");
+        }  
+        clonedDoc.setComment("");
+        clonedDoc.setMinorEdit(false);
+        def c = clonedDoc.toXML(true, false, true, false, context.getContext())
+        return c.trim().replaceAll("[\r]","");
+    }
+
+    Map&lt;String, String&gt; getZipContent(String url) throws Exception
+    {
+        Map&lt;String, String&gt; zipContent = new HashMap&lt;String, String&gt;();
+        
+        ZipInputStream zis = new ZipInputStream(new URL(url).openStream());
+        byte[] buffer = new byte[2048];
+        ZipEntry entry;
+        while ((entry = zis.getNextEntry()) != null) {
+            StringBuffer content = new StringBuffer();  
+            int len = 0;
+            while ((len = zis.read(buffer)) &gt; 0)
+            {
+                content.append(new String(buffer, 0, len));
+            }
+            zipContent.put(entry.getName(), content.toString());
+        }
+        zis.close();
+        
+        return zipContent;
+    }
+
+    Map&lt;String, String&gt; getZipContentUTF8(String url) throws Exception
+    {
+        Map&lt;String, String&gt; zipContent = new HashMap&lt;String, String&gt;();
+        
+        ZipInputStream zis = new ZipInputStream(new URL(url).openStream());
+        byte[] buffer = new byte[2048];
+        ZipEntry entry;
+        while ((entry = zis.getNextEntry()) != null) {
+            StringBuffer content = new StringBuffer();  
+            int len = 0;
+            while ((len = zis.read(buffer)) &gt; 0)
+            {
+                content.append(new String(buffer, 0, len, "UTF-8"));
+            }
+            zipContent.put(entry.getName(), content.toString());
+        }
+        zis.close();
+        
+        return zipContent;
+    }
+
+    InputStream getXarInputStream(String url) throws Exception
+    {
+      return new BufferedInputStream(new URL(url).openStream());
+    }
+
+    String toUTF8(String str) {
+      return new String(str.getBytes(), "UTF-8")
+    }
+
+    String byteToString(byte[] bytes) {
+      return new String(bytes, "UTF-8")
+    }    
+
+    boolean compareDoc(def fromDoc, def toDoc) {
+      
+      def hasChanges = false;
+
+      def text1 = fromDoc.content.trim().replaceAll('\r', '');
+      def text2 = toDoc.content.trim().replaceAll('\r', '');      
+      if(text1 != text2)
+        hasChanges = true;
+      
+      //def attachmentsChanges = fromDoc.getAttachmentDiff(fromDoc, toDoc)
+      //if(attachmentsChanges.size() &gt; 0)
+        //hasChanges = true;
+
+      def classChanges = fromDoc.getClassDiff(fromDoc, toDoc);
+      if (classChanges.size() &gt; 0)
+        hasChanges = true;
+
+      def objectChanges = getObjectDiff(fromDoc, toDoc)
+      if(objectChanges.size() &gt; 0)
+        hasChanges = true;
+
+      return hasChanges;
+    }
+
+    List&lt;List&lt;ObjectDiff&gt;&gt; getObjectDiff(def from, def to) {
+        
+      def fromDoc = from.getDocument();
+      def toDoc = to.getDocument();
+      List&lt;List&lt;ObjectDiff&gt;&gt; difflist = new ArrayList&lt;List&lt;ObjectDiff&gt;&gt;();
+      for(List&lt;BaseObject&gt; objects : fromDoc.getXObjects().values()) {
+        for (BaseObject originalObj : objects) {
+          // This happens when objects are deleted, and the document is still in the cache
+          // storage.
+          if (originalObj != null &amp;&amp; originalObj.getClassName() != "XWiki.TagClass" &amp;&amp; originalObj.getClassName() != "XWiki.XWikiComments" &amp;&amp; originalObj.getClassName() != "XWiki.XWikiRights") {
+            BaseObject newObj = toDoc.getObject(originalObj.getClassName(), originalObj.getNumber());
+            List&lt;ObjectDiff&gt; dlist;
+            if (newObj == null) {
+              // The object was deleted.
+              dlist = getPropertyDiff(originalObj, new BaseObject(), context.getContext());
+              ObjectDiff deleteMarker =
+                new ObjectDiff(originalObj.getClassName(), originalObj.getNumber(),
+              originalObj.getGuid(), ObjectDiff.ACTION_OBJECTREMOVED, "", "", "", "");
+              dlist.add(0, deleteMarker);
+            } else {
+              // The object exists in both versions, but might have been changed.
+              dlist = getPropertyDiff(originalObj, newObj, context.getContext());
+            }
+            if (!dlist.isEmpty()) {
+              difflist.add(dlist);
+            }
+          }
+        }
+      }
+
+      for (List&lt;BaseObject&gt; objects : toDoc.getXObjects().values()) {
+        for (BaseObject newObj : objects) {
+          // This happens when objects are deleted, and the document is still in the cache
+          // storage.
+          if (newObj != null &amp;&amp; newObj.getClassName() != "XWiki.TagClass" &amp;&amp; newObj.getClassName() != "XWiki.XWikiComments" &amp;&amp; newObj.getClassName() != "XWiki.XWikiRights") {
+            BaseObject originalObj = fromDoc.getObject(newObj.getClassName(), newObj.getNumber());
+            if (originalObj == null) {
+              // TODO: Refactor this so that getDiff() accepts null Object as input.
+              // Only consider added objects, the other case was treated above.
+              originalObj = new BaseObject();
+              originalObj.setClassName(newObj.getClassName());
+              originalObj.setNumber(newObj.getNumber());
+              originalObj.setGuid(newObj.getGuid());
+              List&lt;ObjectDiff&gt; dlist = getPropertyDiff(originalObj, newObj, context.getContext());
+              ObjectDiff addMarker =
+                new ObjectDiff(newObj.getClassName(), newObj.getNumber(), newObj.getGuid(),
+              ObjectDiff.ACTION_OBJECTADDED, "", "", "", "");
+              dlist.add(0, addMarker);
+              if (!dlist.isEmpty()) {
+                difflist.add(dlist);
+              }
+            }
+          }
+        }
+      }
+
+      return difflist;
+    }
+
+    public List&lt;ObjectDiff&gt; getPropertyDiff(BaseObject fromObj, BaseObject toObj, XWikiContext context)
+    {
+        ArrayList&lt;ObjectDiff&gt; difflist = new ArrayList&lt;ObjectDiff&gt;();
+        // Iterate over the new properties first, to handle changed and added objects
+        for (String propertyName : toObj.getPropertyList()) {
+            BaseProperty newProperty = (BaseProperty) toObj.getField(propertyName);
+            BaseProperty oldProperty = (BaseProperty) fromObj.getField(propertyName);
+            BaseClass bclass = toObj.getXClass(context);
+            PropertyClass pclass = (PropertyClass) ((bclass == null) ? null : bclass.getField(propertyName));
+            String propertyType = (pclass == null) ? "" : StringUtils.substringAfterLast(pclass.getClassType(), ".");
+
+            if (oldProperty == null) {
+                // The property exist in the new object, but not in the old one
+                if ((newProperty != null) &amp;&amp; (!newProperty.toText().equals(""))) {
+                    String newPropertyValue =
+                        (newProperty.getValue() instanceof String || pclass == null) ? newProperty.toText() : pclass
+                            .displayView(propertyName, toObj, context);
+                    difflist.add(new ObjectDiff(toObj.getClassName(), toObj.getNumber(), toObj.getGuid(),
+                        ObjectDiff.ACTION_PROPERTYADDED, propertyName, propertyType, "", newPropertyValue));
+                }
+            } else if (!oldProperty.toText().equals(((newProperty == null) ? "" : newProperty.toText()))) {
+                // The property exists in both objects and is different
+                if (pclass != null) {
+                    // Put the values as they would be displayed in the interface
+                    String newPropertyValue =
+                        (newProperty.getValue() instanceof String || pclass == null) ? newProperty.toText() : pclass
+                            .displayView(propertyName, toObj, context);
+                    String oldPropertyValue =
+                        (oldProperty.getValue() instanceof String || pclass == null) ? oldProperty.toText() : pclass
+                            .displayView(propertyName, fromObj, context);
+                    difflist.add(new ObjectDiff(toObj.getClassName(), toObj.getNumber(), toObj.getGuid(),
+                        ObjectDiff.ACTION_PROPERTYCHANGED, propertyName, propertyType, oldPropertyValue,
+                        newPropertyValue));
+                } else {
+                    // Cannot get property definition, so use the plain value
+                    difflist.add(new ObjectDiff(toObj.getClassName(), toObj.getNumber(), toObj.getGuid(),
+                        ObjectDiff.ACTION_PROPERTYCHANGED, propertyName, propertyType, oldProperty.toText(),
+                        newProperty.toText()));
+                }
+            }
+        }
+
+        // Iterate over the old properties, in case there are some removed properties
+        for (String propertyName : fromObj.getPropertyList()) {
+            BaseProperty newProperty = (BaseProperty) toObj.getField(propertyName);
+            BaseProperty oldProperty = (BaseProperty) fromObj.getField(propertyName);
+            BaseClass bclass = toObj.getXClass(context);
+            PropertyClass pclass = (PropertyClass) ((bclass == null) ? null : bclass.getField(propertyName));
+            String propertyType = (pclass == null) ? "" : StringUtils.substringAfterLast(pclass.getClassType(), ".");
+
+            if (newProperty == null) {
+                // The property exists in the old object, but not in the new one
+                if ((oldProperty != null) &amp;&amp; (!oldProperty.toText().equals(""))) {
+                    if (pclass != null) {
+                        // Put the values as they would be displayed in the interface
+                        String oldPropertyValue =
+                            (oldProperty.getValue() instanceof String) ? oldProperty.toText() : pclass.displayView(
+                                propertyName, fromObj, context);
+                        difflist.add(new ObjectDiff(fromObj.getClassName(), fromObj.getNumber(), fromObj
+                            .getGuid(), ObjectDiff.ACTION_PROPERTYREMOVED, propertyName, propertyType,
+                            oldPropertyValue, ""));
+                    } else {
+                        // Cannot get property definition, so use the plain value
+                        difflist.add(new ObjectDiff(fromObj.getClassName(), fromObj.getNumber(), fromObj
+                            .getGuid(), ObjectDiff.ACTION_PROPERTYREMOVED, propertyName, propertyType, oldProperty
+                            .toText(), ""));
+                    }
+                }            
+            }
+        }
+
+        return difflist;
+    }
+
+    public String getWordDifferencesAsHTML(String text1, String text2) throws XWikiException
+    {
+        text1 = "~~PLACEHOLDER~~" + text1 + "~~PLACEHOLDER~~";
+        text2 = "~~PLACEHOLDER~~" + text2 + "~~PLACEHOLDER~~";
+
+        StringBuffer html = new StringBuffer("&lt;div class=\"diffmodifiedline\"&gt;");
+        List list = this.xwiki.getPlugin("diff").getWordDifferencesAsList(text1, text2);
+        String[] words = StringUtils.splitPreserveAllTokens(text1, ' ');
+        int cursor = 0;
+        boolean addSpace = false;
+
+        for (int i = 0; i &lt; list.size(); i++) {
+            if (addSpace) {
+                html.append(" ");
+                addSpace = false;
+            }
+
+            Delta delta = (Delta) list.get(i);
+            int position = delta.getOriginal().anchor();
+            // First we fill in all text that has not been changed
+            html.append("&lt;span class=\"diffunmodifiedword\"&gt;");
+            while (cursor &lt; position) {                
+                html.append(this.escape(words[cursor]));
+                html.append(" ");
+                cursor++;
+            }
+            html.append("&lt;/span&gt;");
+            // Then we fill in what has been removed
+            Chunk orig = delta.getOriginal();
+            if (orig.size() &gt; 0) {
+                html.append("&lt;span class=\"diffremoveword\"&gt;");
+                List chunks = orig.chunk();
+                for (int j = 0; j &lt; chunks.size(); j++) {
+                    if (j &gt; 0) {
+                        html.append(" ");
+                    }
+                    html.append(this.escape((String) chunks.get(j)));
+                    cursor++;
+                }
+                html.append("&lt;/span&gt;");
+                addSpace = true;
+            }
+
+            // Then we fill in what has been added
+            Chunk rev = delta.getRevised();
+            if (rev.size() &gt; 0) {
+                html.append("&lt;span class=\"diffaddword\"&gt;");
+                List chunks = rev.chunk();
+                for (int j = 0; j &lt; chunks.size(); j++) {
+                    if (j &gt; 0) {
+                        html.append(" ");
+                    }
+                    html.append(this.escape((String) chunks.get(j)));
+                }
+                html.append("&lt;/span&gt;");
+                addSpace = true;
+            }
+        }
+
+        // First we fill in all text that has not been changed
+        while (cursor &lt; words.length) {
+            if (addSpace) {
+                html.append(" ");
+            }
+            html.append(this.escape(words[cursor]));
+            addSpace = true;
+            cursor++;
+        }
+
+        html.append("&lt;/div&gt;");
+        return html.toString().replaceAll("~~PLACEHOLDER~~", "");
+    }
+
+    public String escape(String text)
+    {
+        return StringEscapeUtils.escapeHtml(text).replaceAll("\\{", "&amp;#123;").replaceAll("\\}", "&amp;#125;").replaceAll("&lt;", "&amp;#60;");
+    }
+
+    public String getDifferencesAsHTML(String text1, String text2, boolean allDoc) throws XWikiException
+    {
+        StringBuffer html = new StringBuffer("&lt;div class=\"diff\"&gt;");
+        if (text1 == null) {
+            text1 = "";
+        }
+        if (text2 == null) {
+            text2 = "";
+        }
+        List list = this.xwiki.getPlugin("diff").getDifferencesAsList(text1, text2);
+        String[] lines = ToString.stringToArray(text1);
+        int cursor = 0;
+        boolean addBR = false;
+
+        for (int i = 0; i &lt; list.size(); i++) {
+            if (addBR) {
+                addBR = false;
+            }
+
+            Delta delta = (Delta) list.get(i);
+            int position = delta.getOriginal().anchor();
+            // First we fill in all text that has not been changed
+            while (cursor &lt; position) {
+                if (allDoc) {
+                    html.append("&lt;div class=\"diffunmodifiedline\"&gt;");
+                    String text = this.escape(lines[cursor]);
+                    if (text.equals("")) {
+                        text = "&amp;nbsp;";
+                    }
+                    html.append(text);
+                    html.append("&lt;/div&gt;");
+                }
+                cursor++;
+            }
+
+            // Then we fill in what has been removed
+            Chunk orig = delta.getOriginal();
+            Chunk rev = delta.getRevised();
+            int j1 = 0;
+
+            if (orig.size() &gt; 0) {
+                List chunks = orig.chunk();
+                int j2 = 0;
+                for (int j = 0; j &lt; chunks.size(); j++) {
+                    String origline = (String) chunks.get(j);
+                    if (origline.equals("")) {
+                        cursor++;
+                        continue;
+                    }
+                    // if (j&gt;0)
+                    // html.append("&lt;br/&gt;");
+                    List revchunks = rev.chunk();
+                    String revline = "";
+                    while ("".equals(revline)) {
+                        revline = (j2 &gt;= revchunks.size()) ? null : (String) revchunks.get(j2);
+                        j2++;
+                        j1++;
+                    }
+                    if (revline != null) {
+                        html.append(getWordDifferencesAsHTML(origline, revline));
+                    } else {
+                        html.append("&lt;div class=\"diffmodifiedline\"&gt;");
+                        html.append("&lt;span class=\"diffremoveword\"&gt;");
+                        html.append(this.escape(origline));
+                        html.append("&lt;/span&gt;&lt;/div&gt;");
+                    }
+                    addBR = true;
+                    cursor++;
+                }
+            }
+
+            // Then we fill in what has been added
+            if (rev.size() &gt; 0) {
+                List chunks = rev.chunk();
+                for (int j = j1; j &lt; chunks.size(); j++) {
+                    // if (j&gt;0)
+                    // html.append("&lt;br/&gt;");
+                    html.append("&lt;div class=\"diffmodifiedline\"&gt;");
+                    html.append("&lt;span class=\"diffaddword\"&gt;");
+                    html.append(this.escape((String) chunks.get(j)));
+                    html.append("&lt;/span&gt;&lt;/div&gt;");
+                }
+                addBR = true;
+            }
+        }
+
+        // First we fill in all text that has not been changed
+        if (allDoc) {
+            while (cursor &lt; lines.length) {
+                html.append("&lt;div class=\"diffunmodifiedline\"&gt;");
+                String text = this.escape(lines[cursor]);
+                if (text.equals("")) {
+                    text = "&amp;nbsp;";
+                }
+                html.append(text);
+                html.append("&lt;/div&gt;");
+                cursor++;
+            }
+        }
+        html.append("&lt;/div&gt;");
+        return html.toString();
+    }
+    public String[] stringToArray(String str) {
+      ToString.stringToArray(str);
+    }
+}
+
+/* *# */</content></xwikidoc>
